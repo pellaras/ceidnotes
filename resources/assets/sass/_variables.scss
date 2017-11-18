@@ -1,38 +1,38 @@
+// 1. Import the initial variables
+@import "./node_modules/bulma/sass/utilities/initial-variables";
+@import "./node_modules/bulma/sass/utilities/functions";
 
-// Body
-$body-bg: #f5f8fa;
+// // 2. Set your own initial variables
+// // Update blue
+// $blue: #72d0eb
+// // Add pink and its invert
+// $pink: #ffb3b3
+// $pink-invert: #fff
+// // Add a serif family
+// $family-serif: "Merriweather", "Georgia", serif
 
-// Borders
-$laravel-border-color: darken($body-bg, 10%);
-$list-group-border: $laravel-border-color;
-$navbar-default-border: $laravel-border-color;
-$panel-default-border: $laravel-border-color;
-$panel-inner-border: $laravel-border-color;
+// // 3. Set the derived variables
+// // Use the new pink as the primary color
+// $primary: $pink
+// $primary-invert: $pink-invert
+// // Use the existing orange as the danger color
+// $danger: $orange
+// // Use the new serif family
+// $family-primary: $family-serif
 
-// Brands
-$brand-primary: #3097D1;
-$brand-info: #8eb4cb;
-$brand-success: #2ab27b;
-$brand-warning: #cbb956;
-$brand-danger: #bf5329;
+// // 4. Setup your Custom Colors
+// $linkedin: #0077B5
+// $linkedin-invert: findColorInvert($linkedin)
+// $twitter: #1DA1F2
+// $twitter-invert: findColorInvert($twitter)
+// $github: #222222
+// $github-invert: findColorInvert($github)
 
-// Typography
-$icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
-$font-family-sans-serif: "Raleway", sans-serif;
-$font-size-base: 14px;
-$line-height-base: 1.6;
-$text-color: #636b6f;
-
-// Navbar
-$navbar-default-bg: #fff;
-
-// Buttons
-$btn-default-color: $text-color;
-
-// Inputs
-$input-border: lighten($text-color, 40%);
-$input-border-focus: lighten($brand-primary, 25%);
-$input-color-placeholder: lighten($text-color, 30%);
-
-// Panels
-$panel-default-heading-bg: #fff;
+// // 5. Add new color variables to the color map.
+@import "./node_modules/bulma/sass/utilities/derived-variables.sass";
+// $addColors: (
+//   "twitter":($twitter, $twitter-invert),
+//   "linkedin": ($linkedin, $linkedin-invert),
+//   "github": ($github, $github-invert)
+// )
+// $colors: map-merge($colors, $addColors)
