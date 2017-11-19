@@ -12,8 +12,11 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+  return view('welcome');
 });
+
+Route::get('notes', 'NotesController@index');
+Route::get('notes/{path}', 'NotesController@show')->where('path', '.*');
 
 Auth::routes();
 
