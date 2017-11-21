@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use App\Directory;
 
 class NotesController extends Controller
 {
@@ -15,8 +16,9 @@ class NotesController extends Controller
      */
     public function index()
     {
-        $files = Storage::cloud()->files('');
-        return $files;
+        $files = Directory::whereNull('directory_id')->get();
+
+        return view('notes.index', compact('files'));
     }
 
     /**
@@ -48,17 +50,25 @@ class NotesController extends Controller
      */
     public function show($path)
     {
-        if (! Storage::cloud()->exists($path)) {
-            abort(404);
-        }
+        $directory = Directory::whereNull('directory_id')
+            ->where('name', $path)
+            ->firstOrFail();
 
-        $file = Storage::cloud()->get($path);
-        $type = Storage::cloud()->mimeType($path);
+        $files = $directory->directories;
 
-        $response = Response::make($file, 200);
-        $response->header("Content-Type", $type);
+        return view('notes.index', compact('files'));
 
-        return $response;
+        // if (! Storage::cloud()->exists($path)) {
+        //     abort(404);
+        // }
+
+        // $file = Storage::cloud()->get($path);
+        // $type = Storage::cloud()->mimeType($path);
+
+        // $response = Response::make($file, 200);
+        // $response->header("Content-Type", $type);
+
+        // return $response;
     }
 
     /**
