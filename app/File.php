@@ -5,7 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Directory extends Model
+class File extends Model
 {
     use SoftDeletes;
 
@@ -13,7 +13,9 @@ class Directory extends Model
 		'legacy_id',
 		'directory_id',
         'name',
+        'type',
         'path',
+        'md5',
 		'user_id',
 		'deleted_by_user_id',
 		'deleted_at',
@@ -30,30 +32,9 @@ class Directory extends Model
         return $this->belongsTo('App\Directory');
     }
 
-    public function directories()
-    {
-        return $this->hasMany('App\Directory');
-    }
-
-    public function files()
-    {
-        return $this->hasMany('App\File');
-    }
-
     public function calculatePath()
     {
-        $path = "";
-        $currentDirectory = $this;
-
-        do {
-            if ($path != "") {
-                $path = "/" . $path;
-            }
-            $path = $currentDirectory->name . $path;
-            $currentDirectory = $currentDirectory->directory;
-        } while ($currentDirectory != null);
-
-        $this->path = $path;
+        $this->path = $this->directory()->withTrashed()->first()->path . "/" . $this->name;
 
         return $this;
     }
