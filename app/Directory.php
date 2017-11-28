@@ -12,7 +12,8 @@ class Directory extends Model
     protected $fillable = [
 		'legacy_id',
 		'directory_id',
-		'name',
+        'name',
+        'path',
 		'user_id',
 		'deleted_by_user_id',
 		'deleted_at',
@@ -32,6 +33,24 @@ class Directory extends Model
     public function directories()
     {
         return $this->hasMany('App\Directory');
+    }
+
+    public function calculatePath()
+    {
+        $path = "";
+        $currentDirectory = $this;
+
+        do {
+            if ($path != "") {
+                $path = "/" . $path;
+            }
+            $path = $currentDirectory->name . $path;
+            $currentDirectory = $currentDirectory->directory;
+        } while ($currentDirectory != null);
+
+        $this->path = $path;
+
+        return $this;
     }
 
 	public function scopeWithoutTimestamps()

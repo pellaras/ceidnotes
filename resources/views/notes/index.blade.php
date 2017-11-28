@@ -17,7 +17,7 @@
                     <td>{{ $file->name }}</td>
 
                     <td>
-                        <a class="button is-small is-primary" href="{{ route('notes.show', $file->name) }}">
+                        <a class="button is-small is-primary" href="{{ route('notes.show', $file->path) }}">
                             Visit
                         </a>
                     </td>

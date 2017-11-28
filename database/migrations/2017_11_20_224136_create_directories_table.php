@@ -18,6 +18,7 @@ class CreateDirectoriesTable extends Migration
             $table->unsignedInteger('legacy_id')->unique()->nullable()->default(null);
             $table->unsignedInteger('directory_id')->nullable()->default(null);
             $table->string('name');
+            $table->string('path')->nullable()->default(null);
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('deleted_by_user_id')->nullable()->default(null);
             $table->softDeletes();

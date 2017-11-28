@@ -50,8 +50,7 @@ class NotesController extends Controller
      */
     public function show($path)
     {
-        $directory = Directory::whereNull('directory_id')
-            ->where('name', $path)
+        $directory = Directory::where('path', $path)
             ->firstOrFail();
 
         $files = $directory->directories;

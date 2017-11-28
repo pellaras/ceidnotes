@@ -49,7 +49,7 @@ class ImportLegacyData extends Command
         $bar = $this->output->createProgressBar($total);
 
         foreach ($directories as $directory) {
-            Directory::withoutTimestamps()->withTrashed()->updateOrCreate(
+            $d = Directory::withoutTimestamps()->withTrashed()->updateOrCreate(
                 ['legacy_id' => $directory->dir_id],
                 [
                     'directory_id' => $directory->parent_dir > 0 ? $directory->parent_dir : null,
@@ -61,13 +61,14 @@ class ImportLegacyData extends Command
                     'created_at' => Carbon::createFromTimestamp($directory->dir_date),
                 ]
             );
+            $d->calculatePath()->save();
 
             $bar->advance();
         }
 
         $bar->finish();
 
-        // $this->line("\n");
+        $this->line("\n");
 
         // $this->info("Total directories: {$total}");
     }
