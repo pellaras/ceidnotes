@@ -7,6 +7,8 @@ use App\Directory;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Semester;
+use App\Lesson;
 
 class ImportLegacyData extends Command
 {
@@ -43,6 +45,8 @@ class ImportLegacyData extends Command
     {
         $this->info("Prepairing to import legacy data...");
 
+        $this->info("Importing Directories...");
+
         $directories = DB::connection('old')->table('directories')->get();
 
         $total = $directories->count();
@@ -71,7 +75,7 @@ class ImportLegacyData extends Command
 
         $this->line("\n");
 
-        $this->info("Prepairing to import legacy data [files]...");
+        $this->info("Importing Files...");
 
         $files = DB::connection('old')->table('files')->get();
 
@@ -103,6 +107,54 @@ class ImportLegacyData extends Command
 
         $this->line("\n");
 
-        // $this->info("Total directories: {$total}");
+        $this->info("Importing Semesters...");
+
+        $semesters = DB::connection('old')->table('semesters')->get();
+
+        $total = $semesters->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($semesters as $semester) {
+            $s = Semester::withTrashed()->updateOrCreate(
+                ['legacy_id' => $semester->semester_id],
+                [
+                    'name' => $semester->semester_name,
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Lessons...");
+
+        $lessons = DB::connection('old')->table('lessons')->get();
+
+        $total = $lessons->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($lessons as $lesson) {
+            $l = Lesson::withTrashed()->updateOrCreate(
+                ['legacy_id' => $lesson->lesson_id],
+                [
+                    'directory_id' => ! $lesson->dir_id ? null : Directory::withTrashed()->where('legacy_id', $lesson->dir_id)->first()->id,
+                    'semester_id' => ! $lesson->semester_id ? null : Semester::withTrashed()->where('legacy_id', $lesson->semester_id)->first()->id,
+                    'name' => $lesson->lesson_name,
+                    'KM' => $lesson->KM,
+                    'category' => $lesson->cat,
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
     }
 }
