@@ -7,6 +7,7 @@ use App\Directory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use App\Semester;
 
 class NotesController extends Controller
 {
@@ -17,9 +18,7 @@ class NotesController extends Controller
      */
     public function index()
     {
-        $files = Directory::whereNull('directory_id')->get();
-
-        return view('notes.index', compact('files'));
+        //
     }
 
     /**
@@ -52,12 +51,14 @@ class NotesController extends Controller
     public function show($path)
     {
         $directory = Directory::where('path', $path)
+            ->with('directories', 'files')
             ->first();
 
         if ($directory) {
-            $files = $directory->directories->merge($directory->files);
+            $directories = $directory->directories;
+            $files = $directory->files;
 
-            return view('notes.index', compact('files'));
+            return view('notes.index', compact('directories', 'files'));
         }
 
         $file = File::where('path', $path)

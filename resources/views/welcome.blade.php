@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="hero is-large is-info is-bold">
-      @include('layouts._navbar')
+      @include('layouts._navbar', ['hideLogo' => 'true'])
   <div class="hero-body">
     <div class="container">
       <h1 class="title">

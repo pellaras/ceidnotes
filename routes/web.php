@@ -15,7 +15,8 @@ Route::get('/', function () {
   return view('welcome');
 });
 
-Route::get('notes', 'NotesController@index')->name('notes.index');
+Route::get('notes', 'SemestersController@index')->name('semesters.index');
+Route::get('notes/{id}', 'SemestersController@show')->where('id', '[1-9]+')->name('semesters.show');
 Route::get('notes/{path}', 'NotesController@show')->where('path', '.*')->name('notes.show');
 
 Auth::routes();
