@@ -1,5 +1,7 @@
 <?php
 
+use App\File;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,7 +14,8 @@
 */
 
 Route::get('/', function () {
-  return view('welcome');
+    $files = File::latest()->take(5)->get();
+    return view('welcome', compact('files'));
 });
 
 Route::get('notes', 'SemestersController@index')->name('semesters.index');
