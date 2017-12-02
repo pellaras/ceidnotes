@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Semester;
 use App\Lesson;
 use App\User;
+use App\Label;
 
 class ImportLegacyData extends Command
 {
@@ -68,6 +69,31 @@ class ImportLegacyData extends Command
                     'deleted_at' => ! $user->reg_date ? Carbon::now() : null,
                     'updated_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
                     'created_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Labels...");
+
+        $labels = DB::connection('old')->table('labels')->get();
+
+        $total = $labels->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($labels as $label) {
+            $l = Label::withTrashed()->updateOrCreate(
+                ['legacy_id' => $label->label_id],
+                [
+                    'code' => $label->label_name,
+                    'name' => $label->label_desc,
+                    'total_files' => $label->label_count,
                 ]
             );
 
@@ -140,6 +166,10 @@ class ImportLegacyData extends Command
                 ]
             );
             $f->calculatePath()->save();
+
+            $file_labels = explode("|", trim($file->labels, "|"));
+            $f_labels = Label::whereIn('legacy_id', $file_labels)->get()->pluck('id');
+            $f->labels()->sync($f_labels);
 
             $bar->advance();
         }

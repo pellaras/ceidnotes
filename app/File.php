@@ -40,6 +40,11 @@ class File extends Model
         return $this->belongsTo('App\Directory');
     }
 
+    public function labels()
+    {
+        return $this->belongsToMany('App\Label')->withTimestamps();
+    }
+
     public function calculatePath()
     {
         $this->path = $this->directory()->withTrashed()->first()->path . "/" . $this->name;
