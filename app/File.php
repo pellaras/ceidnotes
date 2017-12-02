@@ -20,7 +20,15 @@ class File extends Model
 		'deleted_by_user_id',
 		'deleted_at',
 		'updated_at',
-		'created_at',
+        'created_at',
+        'is_owned',
+        'comment',
+        'size',
+        'total_views',
+        'total_downloads',
+        'total_overall',
+        'votes_up',
+        'votes_down',
     ];
 
     protected $dates = [

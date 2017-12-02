@@ -19,6 +19,14 @@ class CreateFilesTable extends Migration
             $table->unsignedInteger('directory_id');
             $table->string('name');
             $table->string('type');
+            $table->boolean('is_owned')->default(false);
+            $table->text('comment')->nullable()->default(null);
+            $table->unsignedInteger('size');
+            $table->unsignedInteger('total_views')->default(0);
+            $table->unsignedInteger('total_downloads')->default(0);
+            $table->unsignedInteger('total_overall')->default(0);
+            $table->unsignedInteger('votes_up')->default(0);
+            $table->unsignedInteger('votes_down')->default(0);
             $table->string('path')->nullable()->default(null);
             $table->string('md5');
             $table->unsignedInteger('user_id');
