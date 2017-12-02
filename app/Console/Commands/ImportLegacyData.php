@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Semester;
 use App\Lesson;
+use App\User;
 
 class ImportLegacyData extends Command
 {
@@ -45,6 +46,38 @@ class ImportLegacyData extends Command
     {
         $this->info("Prepairing to import legacy data...");
 
+        $this->info("Importing Users...");
+
+        $users = DB::connection('old')->table('users')->get();
+
+        $total = $users->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($users as $user) {
+            $u = User::withoutTimestamps()->withTrashed()->updateOrCreate(
+                ['legacy_id' => $user->user_id],
+                [
+                    'name' => $user->realname,
+                    'email' => $user->email,
+                    // 'password_old' => bcrypt($user->password),
+                    'username' => $user->username,
+                    'AM' => $user->AM,
+                    'registration_year' => $user->reg_year,
+                    'is_admin' => !! $user->admin,
+                    'deleted_at' => ! $user->reg_date ? Carbon::now() : null,
+                    'updated_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
+                    'created_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
         $this->info("Importing Directories...");
 
         $directories = DB::connection('old')->table('directories')->get();
@@ -59,8 +92,8 @@ class ImportLegacyData extends Command
                 [
                     'directory_id' => $directory->parent_dir > 0 ? $directory->parent_dir : null,
                     'name' => $directory->dir_name,
-                    'user_id' => $directory->user_id,
-                    'deleted_by_user_id' => $directory->del_user,
+                    'user_id' => User::withTrashed()->where('legacy_id', $directory->user_id)->first()->id,
+                    'deleted_by_user_id' => ! $directory->del_user ? null : User::withTrashed()->where('legacy_id', $directory->del_user)->first()->id,
                     'deleted_at' => $directory->del_date ? Carbon::createFromTimestamp($directory->del_date) : null,
                     'updated_at' => $directory->edit_date ? Carbon::createFromTimestamp($directory->edit_date) : Carbon::createFromTimestamp($directory->dir_date),
                     'created_at' => Carbon::createFromTimestamp($directory->dir_date),
@@ -91,8 +124,8 @@ class ImportLegacyData extends Command
                     'name' => $file->filename,
                     'type' => $file->type,
                     'md5' => $file->md5,
-                    'user_id' => $file->user_id,
-                    'deleted_by_user_id' => $file->del_user,
+                    'user_id' => User::withTrashed()->where('legacy_id', $file->user_id)->first()->id,
+                    'deleted_by_user_id' => ! $file->del_user ? null : User::withTrashed()->where('legacy_id', $file->del_user)->first()->id,
                     'deleted_at' => $file->del_date ? Carbon::createFromTimestamp($file->del_date) : null,
                     'updated_at' => $file->edit_date ? Carbon::createFromTimestamp($file->edit_date) : Carbon::createFromTimestamp($file->filedate),
                     'created_at' => Carbon::createFromTimestamp($file->filedate),
