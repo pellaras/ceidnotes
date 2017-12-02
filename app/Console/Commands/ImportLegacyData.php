@@ -150,7 +150,7 @@ class ImportLegacyData extends Command
                     'name' => $file->filename,
                     'type' => $file->type,
                     'is_owned' => !! $file->owner,
-                    'comment' => $file->comment ?? null,
+                    'comment' => empty($file->comment) ? null : $file->comment,
                     'size' => $file->size,
                     'total_views' => $file->cview,
                     'total_downloads' => $file->cdown,
