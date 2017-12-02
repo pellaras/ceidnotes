@@ -75,6 +75,10 @@ class NotesController extends Controller
         $response = Response::make($file_in_storage, 200);
         $response->header("Content-Type", $type);
 
+        $file->total_downloads++;
+        $file->total_overall++;
+        $file->withoutTimestamps()->save();
+
         return $response;
     }
 
