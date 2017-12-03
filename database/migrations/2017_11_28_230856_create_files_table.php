@@ -27,7 +27,7 @@ class CreateFilesTable extends Migration
             $table->unsignedInteger('total_overall')->default(0);
             $table->unsignedInteger('votes_up')->default(0);
             $table->unsignedInteger('votes_down')->default(0);
-            $table->string('path')->nullable()->default(null);
+            $table->string('path', 1020)->nullable()->default(null);
             $table->string('md5');
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('deleted_by_user_id')->nullable()->default(null);

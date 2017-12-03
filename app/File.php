@@ -47,7 +47,7 @@ class File extends Model
 
     public function calculatePath()
     {
-        $this->path = $this->directory()->withTrashed()->first()->path . "/" . $this->name;
+        $this->path = $this->directory()->withTrashed()->first()->path . "/" . prepair_path($this->name, true);
 
         return $this;
     }

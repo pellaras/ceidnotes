@@ -49,7 +49,7 @@ class Directory extends Model
             if ($path != "") {
                 $path = "/" . $path;
             }
-            $path = $currentDirectory->name . $path;
+            $path = prepair_path($currentDirectory->name) . $path;
             $currentDirectory = $currentDirectory->directory;
         } while ($currentDirectory != null);
 
