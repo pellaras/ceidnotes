@@ -21,6 +21,10 @@ class CreateUsersTable extends Migration
             $table->string('name');
             $table->string('AM')->unique();
             $table->unsignedInteger('registration_year');
+            $table->boolean('send_results_by_email')->default(true);
+            $table->unsignedInteger('phone_id')->nullable()->default(null);
+            $table->unsignedInteger('phone_notifications_start')->default(10);
+            $table->unsignedInteger('phone_notifications_end')->default(21);
             $table->string('password')->nullable()->default(null);
             $table->string('password_old')->nullable()->default(null);
             $table->boolean('is_admin')->default(false);

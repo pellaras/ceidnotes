@@ -11,6 +11,7 @@ use App\Semester;
 use App\Lesson;
 use App\User;
 use App\Label;
+use App\Phone;
 
 class ImportLegacyData extends Command
 {
@@ -65,12 +66,68 @@ class ImportLegacyData extends Command
                     'username' => $user->username,
                     'AM' => $user->AM,
                     'registration_year' => $user->reg_year,
+                    'send_results_by_email' => !! $user->mail_results,
+                    'phone_notifications_start' => $user->ph_s,
+                    'phone_notifications_end' => $user->ph_e,
                     'is_admin' => !! $user->admin,
                     'deleted_at' => ! $user->reg_date ? Carbon::now() : null,
                     'updated_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
                     'created_at' => ! $user->reg_date ? Carbon::now() : Carbon::createFromTimestamp($user->reg_date),
                 ]
             );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Phones...");
+
+        $phones = DB::connection('old')->table('phones')->get();
+
+        $total = $phones->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($phones as $phone) {
+            $p = Phone::withoutTimestamps()->withTrashed()->updateOrCreate(
+                ['legacy_id' => $phone->phone_id],
+                [
+                    'user_id' => User::withTrashed()->where('legacy_id', $phone->user_id)->first()->id,
+                    'phone_number' => $phone->phone,
+                    'verification_code' => $phone->code,
+                    'verified' => !! $phone->ok,
+                    'updated_at' => Carbon::createFromTimestamp($phone->time),
+                    'created_at' => Carbon::createFromTimestamp($phone->time),
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Configure Phone Number on Users...");
+
+        $users = DB::connection('old')->table('users')->get();
+
+        $total = $users->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($users as $user) {
+            $p = Phone::withoutTimestamps()->withTrashed()
+                ->where('legacy_id', $user->phone_id)
+                ->first();
+            $u = User::withoutTimestamps()->withTrashed()
+                ->where('legacy_id', $user->user_id)
+                ->update(
+                    ['phone_id' => $p ? $p->id : null]
+                );
 
             $bar->advance();
         }

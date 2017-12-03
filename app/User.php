@@ -25,6 +25,10 @@ class User extends Authenticatable
         'username',
         'AM',
         'registration_year',
+        'send_results_by_email',
+        'phone_id',
+        'phone_notifications_start',
+        'phone_notifications_end',
         'is_admin',
         'deleted_at',
 		'updated_at',
@@ -45,6 +49,16 @@ class User extends Authenticatable
     protected $dates = [
 		'deleted_at',
     ];
+
+	public function phones()
+    {
+        return $this->hasMany('App\Phone');
+    }
+
+	public function phone()
+    {
+        return $this->belongsTo('App\Phone');
+    }
 
 	public function scopeWithoutTimestamps()
     {
