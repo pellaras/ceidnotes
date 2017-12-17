@@ -6,10 +6,15 @@
     "type": "project",
     "require": {
         "php": ">=7.0.0",
+        "doctrine/dbal": "^2.5",
+        "intervention/image": "^2.3",
+        "intervention/imagecache": "^2.3",
         "fideloper/proxy": "~3.3",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
+        "league/flysystem-cached-adapter": "^1.0",
         "matthewbdaly/laravel-azure-storage": "^1.0",
+        "spatie/laravel-backup": "^5.1",
         "predis/predis": "^1.1"
     },
     "require-dev": {

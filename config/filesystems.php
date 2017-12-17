@@ -61,6 +61,7 @@ return [
             'secret' => env('AWS_SECRET'),
             'region' => env('AWS_REGION'),
             'bucket' => env('AWS_BUCKET'),
+            'cache' => true,
         ],
 
         'azure' => [
@@ -68,6 +69,7 @@ return [
             'name'      => env('AZURE_STORAGE_NAME'),
             'key'       => env('AZURE_STORAGE_KEY'),
             'container' => env('AZURE_STORAGE_CONTAINER'),
+            'cache' => true,
         ],
 
     ],
