@@ -45,6 +45,21 @@ class File extends Model
         return $this->belongsToMany('App\Label')->withTimestamps();
     }
 
+    public function likes()
+    {
+        return $this->morphMany('App\Like', 'likeable');
+    }
+
+    public function reports()
+    {
+        return $this->morphMany('App\Report', 'reportable');
+    }
+
+    public function edits()
+    {
+        return $this->morphMany('App\Edit', 'editable');
+    }
+
     public function calculatePath()
     {
         $this->path = $this->directory()->withTrashed()->first()->path . "/" . prepair_path($this->name, true);

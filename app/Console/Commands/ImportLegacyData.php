@@ -12,6 +12,9 @@ use App\Lesson;
 use App\User;
 use App\Label;
 use App\Phone;
+use App\Like;
+use App\Report;
+use App\Edit;
 
 class ImportLegacyData extends Command
 {
@@ -62,7 +65,7 @@ class ImportLegacyData extends Command
                 [
                     'name' => $user->realname,
                     'email' => $user->email,
-                    // 'password_old' => bcrypt($user->password),
+                    'password_old' => bcrypt($user->password),
                     'username' => $user->username,
                     'AM' => $user->AM,
                     'registration_year' => $user->reg_year,
@@ -209,9 +212,9 @@ class ImportLegacyData extends Command
                     'is_owned' => !! $file->owner,
                     'comment' => empty($file->comment) ? null : $file->comment,
                     'size' => $file->size,
-                    'total_views' => $file->cview,
-                    'total_downloads' => $file->cdown,
-                    'total_overall' => $file->ctotal,
+                    // 'total_views' => $file->cview,
+                    // 'total_downloads' => $file->cdown,
+                    // 'total_overall' => $file->ctotal,
                     'votes_up' => $file->vote_up,
                     'votes_down' => $file->vote_down,
                     'md5' => $file->md5,
@@ -275,6 +278,116 @@ class ImportLegacyData extends Command
                     'name' => $lesson->lesson_name,
                     'KM' => $lesson->KM,
                     'category' => $lesson->cat,
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Likes...");
+
+        $likes = DB::connection('old')->table('votes')->get();
+
+        $total = $likes->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($likes as $like) {
+            $l = Like::withoutTimestamps()->updateOrCreate(
+                ['legacy_id' => $like->user_id . '-' . $like->file_id],
+                [
+                    'user_id' => User::withTrashed()->where('legacy_id', $like->user_id)->first()->id,
+                    'likeable_id' => File::withTrashed()->where('legacy_id', $like->file_id)->first()->id,
+                    'likeable_type' => File::class,
+                    'value' => $like->vote,
+                    'updated_at' => Carbon::createFromTimestamp($like->time),
+                    'created_at' => Carbon::createFromTimestamp($like->time),
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Reports...");
+
+        $reports = DB::connection('old')->table('reports')->get();
+
+        $total = $reports->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($reports as $report) {
+            $r = Report::withoutTimestamps()->withTrashed()->updateOrCreate(
+                ['legacy_id' => $report->report_id],
+                [
+                    'user_id' => optional(User::withTrashed()->where('legacy_id', $report->user_id)->first())->id,
+                    'email' => $report->email,
+                    'reportable_id' => $report->fd_type == 'file'
+                        ? File::withTrashed()->where('legacy_id', $report->fd_id)->first()->id
+                        : Directory::withTrashed()->where('legacy_id', $report->fd_id)->first()->id,
+                    'reportable_type' => $report->fd_type == 'file' ? File::class : Directory::class,
+                    'reason' => $report->reason,
+                    'updated_at' => Carbon::createFromTimestamp($report->report_date),
+                    'created_at' => Carbon::createFromTimestamp($report->report_date),
+                ]
+            );
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+
+        $this->line("\n");
+
+        $this->info("Importing Edits...");
+
+        $edits = DB::connection('old')->table('modifications')->get();
+
+        $total = $edits->count();
+
+        $bar = $this->output->createProgressBar($total);
+
+        foreach ($edits as $edit) {
+            $modified_data = [
+                'from_legacy' => true,
+            ];
+            if ($edit->status != null) {
+                $modified_data['status'] = $edit->status;
+            }
+            if ($edit->fd_name != null) {
+                $modified_data['name'] = $edit->fd_name;
+            }
+            if ($edit->owner != null) {
+                $modified_data['is_owned'] = $edit->owner;
+            }
+            if ($edit->labels != null) {
+                $modified_data['labels'] = $edit->labels;
+            }
+            if ($edit->comment != null) {
+                $modified_data['comment'] = $edit->comment;
+            }
+            if ($edit->parent_dir != null) {
+                $modified_data['directory_id'] = $edit->parent_dir;
+            }
+            $e = Edit::withoutTimestamps()->updateOrCreate(
+                ['legacy_id' => $edit->mod_id],
+                [
+                    'user_id' => optional(User::withTrashed()->where('legacy_id', $edit->user_id)->first())->id,
+                    'editable_id' => $edit->fd_type == 'file'
+                        ? File::withTrashed()->where('legacy_id', $edit->fd_id)->first()->id
+                        : Directory::withTrashed()->where('legacy_id', $edit->fd_id)->first()->id,
+                    'editable_type' => $edit->fd_type == 'file' ? File::class : Directory::class,
+                    'modified_data' => $modified_data,
+                    'updated_at' => Carbon::createFromTimestamp($edit->mod_date),
+                    'created_at' => Carbon::createFromTimestamp($edit->mod_date),
                 ]
             );
 

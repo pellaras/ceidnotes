@@ -40,6 +40,16 @@ class Directory extends Model
         return $this->hasMany('App\File');
     }
 
+    public function reports()
+    {
+        return $this->morphMany('App\Report', 'reportable');
+    }
+
+    public function edits()
+    {
+        return $this->morphMany('App\Edit', 'editable');
+    }
+
     public function calculatePath()
     {
         $path = "";

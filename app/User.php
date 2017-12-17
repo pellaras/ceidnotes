@@ -50,6 +50,21 @@ class User extends Authenticatable
 		'deleted_at',
     ];
 
+	public function likes()
+    {
+        return $this->hasMany('App\Like');
+    }
+
+	public function reports()
+    {
+        return $this->hasMany('App\Report');
+    }
+
+	public function edits()
+    {
+        return $this->hasMany('App\Edit');
+    }
+
 	public function phones()
     {
         return $this->hasMany('App\Phone');
