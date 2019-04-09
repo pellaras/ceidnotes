@@ -18,6 +18,7 @@ class CreateUsersTable extends Migration
             $table->unsignedInteger('legacy_id')->unique()->nullable()->default(null);
             $table->string('username')->unique();
             $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('name');
             $table->string('AM')->unique();
             $table->unsignedInteger('registration_year');
