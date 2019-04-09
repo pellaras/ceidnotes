@@ -44,7 +44,7 @@
           </div>
         </div>
         @else
-        {{--  <div class="navbar-item">
+         <div class="navbar-item">
           <div class="field is-grouped">
             <p class="control">
               <a class="button is-white is-outlined" href="{{ route('login') }}">
@@ -65,7 +65,7 @@
               </a>
             </p>
           </div>
-        </div>  --}}
+        </div>
         @endauth
       </div>
     </div>

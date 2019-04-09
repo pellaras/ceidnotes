@@ -22,6 +22,6 @@ Route::get('notes', 'SemestersController@index')->name('semesters.index');
 Route::get('notes/{id}', 'SemestersController@show')->where('id', '[0-9]+')->name('semesters.show');
 Route::get('notes/{path}', 'NotesController@show')->where('path', '.*')->name('notes.show');
 
-// Auth::routes();
+Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');

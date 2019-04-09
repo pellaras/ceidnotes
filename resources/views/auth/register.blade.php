@@ -14,42 +14,20 @@
 
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Name</label>
+              <label class="label">Username</label>
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control has-icons-left">
-                  <input class="input{{ $errors->has('name') ? ' is-danger' : '' }}" id="name" type="text" name="name" placeholder="Enter your name"
-                    value="{{ old('name') }}" autofocus>
+                  <input class="input{{ $errors->has('username') ? ' is-danger' : '' }}" id="username" type="text" name="username" placeholder="Enter your username"
+                    value="{{ old('username') }}" autofocus>
                   <span class="icon is-small is-left">
                     <i class="fa fa-user"></i>
                   </span>
                 </div>
-                @if ($errors->has('name'))
+                @if ($errors->has('username'))
                 <p class="help is-danger">
-                  {{ $errors->first('name') }}
-                </p>
-                @endif
-              </div>
-            </div>
-          </div>
-
-          <div class="field is-horizontal">
-            <div class="field-label is-normal">
-              <label class="label">E-Mail Address</label>
-            </div>
-            <div class="field-body">
-              <div class="field">
-                <div class="control has-icons-left">
-                  <input class="input{{ $errors->has('email') ? ' is-danger' : '' }}" id="email" type="email" name="email" placeholder="Enter your e-mail address"
-                    value="{{ old('email') }}">
-                  <span class="icon is-small is-left">
-                    <i class="fa fa-envelope"></i>
-                  </span>
-                </div>
-                @if ($errors->has('email'))
-                <p class="help is-danger">
-                  {{ $errors->first('email') }}
+                  {{ $errors->first('username') }}
                 </p>
                 @endif
               </div>

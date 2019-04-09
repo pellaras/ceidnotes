@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
+use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 
@@ -48,10 +51,22 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            // 'name' => 'required|string|max:255',
+            // 'email' => 'required|string|email|max:255|unique:users',
+            'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
         ]);
+    }
+
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        event(new Registered($user = $this->create($request->all())));
+
+        // $this->guard()->login($user);
+
+        return redirect('/');
     }
 
     /**
@@ -62,10 +77,64 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        $additional_data = $this->getData($data['username']);
+
+        if (! $additional_data) {
+            dd('failed');
+        }
+
         return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
+            'name' => $additional_data['name'],
+            'username' => $data['username'],
+            'email' => $data['username'] . '@ceid.upatras.gr',
             'password' => bcrypt($data['password']),
+            'AM' => $additional_data['AM'],
+            'registration_year' => $additional_data['registration_year'],
         ]);
+    }
+
+    protected function getData($username)
+    {
+        $client = new Client([
+            'form_params' => [
+                'attribute' => 'uid',
+                'criterion' => '=',
+                'keyword' => $username,
+                'dn' => 'cn=users,cn=accounts,dc=ceid,dc=upatras,dc=gr',
+                'search' => 'search',
+            ],
+            'verify' => false
+        ]);
+
+        $response = $client->post('https://directory.ceid.upatras.gr/');
+
+        if ($response->getStatusCode() !== 200) {
+            return null;
+        }
+
+        $contents = $response->getBody()->getContents();
+
+        $regex = '/<td class="n">\s*'
+                        .'<span class="given-name">(.*)<\/span>\s*'
+                        .'<span class="family-name">(.*)<\/span>\s*'
+                        .'<\/td>\s*'
+                        .'<td class="fn">(.*)<\/td>\s*'
+                        .'<td class="org">CEID<\/td>\s*'
+                        .'<!-- <td class="title"><\/td> -->\s*'
+                        .'<td class="title">(.*)<\/td>\s*'
+                        .'<td class="tel">([0-9]+)\/([0-9]+)<\/td>\s*'
+                        .'<td class="email"><a href="mailto:'.$username.'@ceid.upatras.gr">'.$username.'@ceid.upatras.gr<\/a><\/td>/';
+
+        if (! preg_match($regex, $contents, $parsed_data)) {
+            return null;
+        }
+
+        $user_data = [
+            'name' => $parsed_data[3],
+            'AM' => $parsed_data[5],
+            'registration_year' => $parsed_data[6],
+        ];
+
+        return $user_data;
     }
 }
