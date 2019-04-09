@@ -65,7 +65,7 @@ class ImportLegacyData extends Command
                 [
                     'name' => $user->realname,
                     'email' => $user->email,
-                    'password_old' => bcrypt($user->password),
+                    // 'password_old' => bcrypt($user->password),
                     'username' => $user->username,
                     'AM' => $user->AM,
                     'registration_year' => $user->reg_year,
