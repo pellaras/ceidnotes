@@ -7,9 +7,13 @@
     <div class="tile is-ancestor">
       <div class="tile is-2"></div>
       <div class="tile box is-vertical is-8">
-        <h1 class="title">Register</h1>
+        <h1 class="title">Ολοκλήρωση Εγγραφής</h1>
 
-        <form class="" method="POST" action="{{ route('register') }}">
+        @if ($errors->has('global'))
+          @include('alerts.errors')
+        @endif
+
+        <form class="" method="POST" action="{{ url()->full() }}">
           {{ csrf_field() }}
 
           <div class="field is-horizontal">
@@ -19,29 +23,23 @@
             <div class="field-body">
               <div class="field">
                 <div class="control has-icons-left">
-                  <input class="input{{ $errors->has('username') ? ' is-danger' : '' }}" id="username" type="text" name="username" placeholder="Enter your username"
-                    value="{{ old('username') }}" autofocus>
+                  <input class="input" id="username" type="text" value="{{ $username }}"  disabled>
                   <span class="icon is-small is-left">
                     <i class="fa fa-user"></i>
                   </span>
                 </div>
-                @if ($errors->has('username'))
-                <p class="help is-danger">
-                  {{ $errors->first('username') }}
-                </p>
-                @endif
               </div>
             </div>
           </div>
 
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Password</label>
+              <label class="label">Κωδικός</label>
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control has-icons-left">
-                  <input class="input{{ $errors->has('password') ? ' is-danger' : '' }}" id="password" type="password" name="password" placeholder="Enter a password">
+                  <input class="input{{ $errors->has('password') ? ' is-danger' : '' }}" id="password" type="password" name="password" placeholder="Enter a password" autofocus>
                   <span class="icon is-small is-left">
                     <i class="fa fa-key"></i>
                   </span>
@@ -57,7 +55,7 @@
 
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Confirm Password</label>
+              <label class="label">Επιβεβαίωση Κωδικού</label>
             </div>
             <div class="field-body">
               <div class="field">
@@ -73,13 +71,13 @@
 
           <div class="field is-horizontal">
             <div class="field-label">
-              <!-- Left empty for spacing -->
+              {{-- Left empty for spacing --}}
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control">
                   <button type="submit" class="button is-primary">
-                    Register
+                    Εγγραφή
                   </button>
                 </div>
               </div>

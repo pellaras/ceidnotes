@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
-use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Registered;
@@ -31,7 +30,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/';
 
     /**
      * Create a new controller instance.
@@ -43,6 +42,15 @@ class RegisterController extends Controller
         $this->middleware('guest');
     }
 
+    public function showRegistrationForm($username)
+    {
+        if (User::where('username', $username)->count()) {
+            return redirect('/');
+        }
+
+        return view('auth.register', compact('username'));
+    }
+
     /**
      * Get a validator for an incoming registration request.
      *
@@ -52,18 +60,32 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
 
-    public function register(Request $request)
+    public function register(Request $request, $username)
     {
-        $this->validator($request->all())->validate();
+        if (User::where('username', $username)->count()) {
+            return redirect('/');
+        }
 
-        event(new Registered($user = $this->create($request->all())));
+        $data = $this->validator($request->all())->validate();
 
-        // $this->guard()->login($user);
+        $user_info = User::getDirectoryData($username);
+
+        if (! $user_info) {
+            return back()->withErrors(['global' => 'Σφάλμα κατά την φόρτωση των πληροφοριών του χρήστη. Παρακαλώ δοκιμάστε αργότερα.']);
+        }
+
+        $data['username'] = $username;
+        $data['name'] = $user_info['name'];
+        $data['AM'] = $user_info['AM'];
+        $data['registration_year'] = $user_info['registration_year'];
+
+        event(new Registered($user = $this->create($data)));
+
+        $this->guard()->login($user);
 
         return redirect('/');
     }
@@ -76,64 +98,13 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        $additional_data = $this->getData($data['username']);
-
-        if (! $additional_data) {
-            dd('failed');
-        }
-
         return User::create([
-            'name' => $additional_data['name'],
+            'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['username'] . '@ceid.upatras.gr',
             'password' => Hash::make($data['password']),
-            'AM' => $additional_data['AM'],
-            'registration_year' => $additional_data['registration_year'],
+            'AM' => $data['AM'],
+            'registration_year' => $data['registration_year'],
         ]);
-    }
-
-    protected function getData($username)
-    {
-        $client = new Client([
-            'form_params' => [
-                'attribute' => 'uid',
-                'criterion' => '=',
-                'keyword' => $username,
-                'dn' => 'cn=users,cn=accounts,dc=ceid,dc=upatras,dc=gr',
-                'search' => 'search',
-            ],
-            'verify' => false
-        ]);
-
-        $response = $client->post('https://directory.ceid.upatras.gr/');
-
-        if ($response->getStatusCode() !== 200) {
-            return null;
-        }
-
-        $contents = $response->getBody()->getContents();
-
-        $regex = '/<td class="n">\s*'
-                        .'<span class="given-name">(.*)<\/span>\s*'
-                        .'<span class="family-name">(.*)<\/span>\s*'
-                        .'<\/td>\s*'
-                        .'<td class="fn">(.*)<\/td>\s*'
-                        .'<td class="org">CEID<\/td>\s*'
-                        .'<!-- <td class="title"><\/td> -->\s*'
-                        .'<td class="title">(.*)<\/td>\s*'
-                        .'<td class="tel">([0-9]+)\/([0-9]+)<\/td>\s*'
-                        .'<td class="email"><a href="mailto:'.$username.'@ceid.upatras.gr">'.$username.'@ceid.upatras.gr<\/a><\/td>/';
-
-        if (! preg_match($regex, $contents, $parsed_data)) {
-            return null;
-        }
-
-        $user_data = [
-            'name' => $parsed_data[3],
-            'AM' => $parsed_data[5],
-            'registration_year' => $parsed_data[6],
-        ];
-
-        return $user_data;
     }
 }

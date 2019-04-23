@@ -1,47 +1,57 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Reset Password</div>
+<section class="section">
+  <div class="container">
 
-                <div class="panel-body">
-                    @if (session('status'))
-                        <div class="alert alert-success">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+    <div class="tile is-ancestor">
+      <div class="tile is-2"></div>
+      <div class="tile box is-vertical is-8">
+        <h1 class="title">Επαναφορά Κωδικού</h1>
 
-                    <form class="form-horizontal" method="POST" action="{{ route('password.email') }}">
-                        {{ csrf_field() }}
+        @include('alerts.success')
 
-                        <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <label for="email" class="col-md-4 control-label">E-Mail Address</label>
+        <form class="" method="POST" action="{{ route('password.email') }}">
+          @csrf
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required>
-
-                                @if ($errors->has('email'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Send Password Reset Link
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">E-Mail Address</label>
             </div>
-        </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control has-icons-left">
+                  <input class="input{{ $errors->has('email') ? ' is-danger' : '' }}" id="email" type="email" name="email" placeholder="Enter your e-mail address" value="{{ old('email') }}" required autofocus>
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-envelope-o"></i>
+                  </span>
+                </div>
+                @if ($errors->has('email'))
+                <p class="help is-danger">
+                  {{ $errors->first('email') }}
+                </p>
+                @endif
+              </div>
+            </div>
+          </div>
+
+          <div class="field is-horizontal">
+            <div class="field-label">
+              {{-- Left empty for spacing --}}
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <button type="submit" class="button is-primary">
+                    Αποστολή συνδέσμου για επαναφορά κωδικού
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 @endsection

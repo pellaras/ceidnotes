@@ -6,6 +6,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 
 class User extends Authenticatable
 {
@@ -90,4 +92,47 @@ class User extends Authenticatable
         $this->timestamps = false;
         return $this;
 	}
+
+    public static function getDirectoryData($username)
+    {
+        return Cache::remember('directory.user.' . $username, $seconds = 60 * 60, function () use ($username) {
+            $client = new Client([
+                'form_params' => [
+                    'attribute' => 'uid',
+                    'criterion' => '=',
+                    'keyword' => $username,
+                    'dn' => 'cn=users,cn=accounts,dc=ceid,dc=upatras,dc=gr',
+                    'search' => 'search',
+                ],
+                'verify' => false
+            ]);
+
+            $response = $client->post('https://directory.ceid.upatras.gr/');
+
+            if ($response->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $regex = '/<td class="n">\s*' .
+                '<span class="given-name">(.*)<\/span>\s*' .
+                '<span class="family-name">(.*)<\/span>\s*' .
+                '<\/td>\s*' .
+                '<td class="fn">(.*)<\/td>\s*' .
+                '<td class="org">CEID<\/td>\s*' .
+                '<!-- <td class="title"><\/td> -->\s*' .
+                '<td class="title">(.*)<\/td>\s*' .
+                '<td class="tel">([0-9]+)\/([0-9]+)<\/td>\s*' .
+                '<td class="email"><a href="mailto:' . $username . '@ceid.upatras.gr">' . $username . '@ceid.upatras.gr<\/a><\/td>/';
+
+            if (! preg_match($regex, $response->getBody()->getContents(), $parsed_data)) {
+                return null;
+            }
+
+            return [
+                'name' => $parsed_data[3],
+                'AM' => $parsed_data[5],
+                'registration_year' => $parsed_data[6],
+            ];
+        });
+    }
 }

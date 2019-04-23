@@ -1,70 +1,99 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Reset Password</div>
+<section class="section">
+  <div class="container">
 
-                <div class="panel-body">
-                    <form class="form-horizontal" method="POST" action="{{ route('password.request') }}">
-                        {{ csrf_field() }}
+    <div class="tile is-ancestor">
+      <div class="tile is-2"></div>
+      <div class="tile box is-vertical is-8">
+        <h1 class="title">Επαναφορά Κωδικού</h1>
 
-                        <input type="hidden" name="token" value="{{ $token }}">
+        <form class="" method="POST" action="{{ route('password.request') }}">
+          @csrf
 
-                        <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <label for="email" class="col-md-4 control-label">E-Mail Address</label>
+          <input type="hidden" name="token" value="{{ $token }}">
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control" name="email" value="{{ $email or old('email') }}" required autofocus>
-
-                                @if ($errors->has('email'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <label for="password" class="col-md-4 control-label">Password</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control" name="password" required>
-
-                                @if ($errors->has('password'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('password') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group{{ $errors->has('password_confirmation') ? ' has-error' : '' }}">
-                            <label for="password-confirm" class="col-md-4 control-label">Confirm Password</label>
-                            <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required>
-
-                                @if ($errors->has('password_confirmation'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('password_confirmation') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Reset Password
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">E-Mail Address</label>
             </div>
-        </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control has-icons-left">
+                  <input class="input{{ $errors->has('email') ? ' is-danger' : '' }}" id="email" type="email" name="email" placeholder="Enter your e-mail address" value="{{ old('email') }}" required autofocus>
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-envelope-o"></i>
+                  </span>
+                </div>
+                @if ($errors->has('email'))
+                <p class="help is-danger">
+                  {{ $errors->first('email') }}
+                </p>
+                @endif
+              </div>
+            </div>
+          </div>
+
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Κωδικός</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control has-icons-left">
+                  <input class="input{{ $errors->has('password') ? ' is-danger' : '' }}" id="password" type="password" name="password" placeholder="Enter a password" autofocus>
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-key"></i>
+                  </span>
+                </div>
+                @if ($errors->has('password'))
+                <p class="help is-danger">
+                  {{ $errors->first('password') }}
+                </p>
+                @endif
+              </div>
+            </div>
+          </div>
+
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Επιβεβαίωση Κωδικού</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control has-icons-left">
+                  <input class="input{{ $errors->has('password') ? ' is-danger' : '' }}" id="password-confirm" type="password" name="password_confirmation" placeholder="Confirm password">
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-key"></i>
+                  </span>
+                </div>
+                @if ($errors->has('password_confirmation'))
+                <p class="help is-danger">
+                  {{ $errors->first('password_confirmation') }}
+                </p>
+                @endif
+              </div>
+            </div>
+          </div>
+
+          <div class="field is-horizontal">
+            <div class="field-label">
+              {{-- Left empty for spacing --}}
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <div class="control">
+                  <button type="submit" class="button is-primary">
+                    Επαναφορά Κωδικού
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 @endsection

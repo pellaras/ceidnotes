@@ -2,37 +2,14 @@
 @import "./node_modules/bulma/sass/utilities/initial-variables";
 @import "./node_modules/bulma/sass/utilities/functions";
 
-// // 2. Set your own initial variables
-// // Update blue
-// $blue: #72d0eb
-// // Add pink and its invert
-// $pink: #ffb3b3
-// $pink-invert: #fff
-// // Add a serif family
-// $family-serif: "Merriweather", "Georgia", serif
+// 2. Set your own initial variables
+$navbar-background-color: $cyan;
+$navbar-item-color: $white;
+$navbar-dropdown-background-color: $cyan;
 
-// // 3. Set the derived variables
-// // Use the new pink as the primary color
-// $primary: $pink
-// $primary-invert: $pink-invert
-// // Use the existing orange as the danger color
-// $danger: $orange
-// // Use the new serif family
-// $family-primary: $family-serif
+// 3. Set the derived variables
 
-// // 4. Setup your Custom Colors
-// $linkedin: #0077B5
-// $linkedin-invert: findColorInvert($linkedin)
-// $twitter: #1DA1F2
-// $twitter-invert: findColorInvert($twitter)
-// $github: #222222
-// $github-invert: findColorInvert($github)
+// 4. Setup your Custom Colors
 
-// // 5. Add new color variables to the color map.
+// 5. Add new color variables to the color map.
 @import "./node_modules/bulma/sass/utilities/derived-variables.sass";
-// $addColors: (
-//   "twitter":($twitter, $twitter-invert),
-//   "linkedin": ($linkedin, $linkedin-invert),
-//   "github": ($github, $github-invert)
-// )
-// $colors: map-merge($colors, $addColors)

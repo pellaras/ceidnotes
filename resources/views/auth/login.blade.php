@@ -7,7 +7,7 @@
     <div class="tile is-ancestor">
       <div class="tile is-2"></div>
       <div class="tile box is-vertical is-8">
-        <h1 class="title">Login</h1>
+        <h1 class="title">Σύνδεση</h1>
 
         <form class="" method="POST" action="{{ route('login') }}">
           {{ csrf_field() }}
@@ -36,7 +36,7 @@
 
           <div class="field is-horizontal">
             <div class="field-label is-normal">
-              <label class="label">Password</label>
+              <label class="label">Κωδικός</label>
             </div>
             <div class="field-body">
               <div class="field">
@@ -57,14 +57,14 @@
 
           <div class="field is-horizontal">
             <div class="field-label">
-              <!-- Left empty for spacing -->
+              {{-- Left empty for spacing --}}
             </div>
             <div class="field-body">
               <div class="field">
                 <div class="control">
                   <label class="checkbox">
                     <input type="checkbox" name="remember" {{ old( 'remember') ? 'checked' : '' }}>
-                    Remember Me
+                    Να με θυμάσαι
                   </label>
                 </div>
               </div>
@@ -79,12 +79,12 @@
               <div class="field is-grouped">
                 <div class="control">
                   <button type="submit" class="button is-primary">
-                    Login
+                    Σύνδεση
                   </button>
                 </div>
                 <div class="control">
                   <a class="button is-white" href="{{ route('password.request') }}">
-                    Forgot Your Password?
+                    Ξέχασες τον κωδικό σου;
                   </a>
                 </div>
               </div>
