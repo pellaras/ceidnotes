@@ -7,6 +7,7 @@ use App\Directory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Cache;
 use App\Semester;
 
 class NotesController extends Controller
@@ -63,17 +64,23 @@ class NotesController extends Controller
 
         $file = File::where('path', $path)
             ->firstOrFail();
+        
+        $cache_key_user = 'file_' . $file->md5;
+        
+        $response = Cache::store('file')->rememberForever($cache_key_user, function () use ($file) {
+            $storage_path = $file->md5;
+            if (! Storage::cloud()->exists($storage_path)) {
+                abort(404);
+            }
 
-        $storage_path = $file->md5;
-        if (! Storage::cloud()->exists($storage_path)) {
-            abort(404);
-        }
+            $file_in_storage = Storage::cloud()->get($storage_path);
+            $type = Storage::cloud()->mimeType($storage_path);
 
-        $file_in_storage = Storage::cloud()->get($storage_path);
-        $type = Storage::cloud()->mimeType($storage_path);
+            $response = Response::make($file_in_storage, 200);
+            $response->header("Content-Type", $type);
 
-        $response = Response::make($file_in_storage, 200);
-        $response->header("Content-Type", $type);
+            return $response;
+        });
 
         $file->total_downloads++;
         $file->total_overall++;
