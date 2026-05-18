@@ -2,31 +2,72 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Notifiable;
+    use SoftDeletes;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'password_old',
+        'legacy_id',
+        'username',
+        'AM',
+        'registration_year',
+        'send_results_by_email',
+        'phone_id',
+        'phone_notifications_start',
+        'phone_notifications_end',
+        'is_admin',
+        'deleted_at',
+        'updated_at',
+        'created_at',
+    ];
+
+    protected $hidden = [
+        'password',
+        'password_old',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
+
+    public function likes()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(\App\Models\Like::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(\App\Models\Report::class);
+    }
+
+    public function edits()
+    {
+        return $this->hasMany(\App\Models\Edit::class);
+    }
+
+    public function phones()
+    {
+        return $this->hasMany(\App\Models\Phone::class);
+    }
+
+    public function phone()
+    {
+        return $this->belongsTo(\App\Models\Phone::class);
+    }
+
+    public function scopeWithoutTimestamps()
+    {
+        $this->timestamps = false;
+        return $this;
     }
 }
