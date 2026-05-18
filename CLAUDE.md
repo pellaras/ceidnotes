@@ -4,9 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project context
 
-`ceidnotes` is a Laravel 5.5 (PHP >= 7.0) web app that browses and downloads class notes — directories of files organized by semester and lesson. It is a rewrite of an older PHP system; every domain model carries a `legacy_id` so records can be matched back to the previous database during migration.
-
-`readme.md` is the unmodified Laravel framework readme and is not project-specific.
+`ceidnotes` is a Laravel 13.x (PHP ^8.3) web app that browses and downloads class notes — directories of files organized by semester and lesson. It is a rewrite of a Laravel 5.5 app, which itself rewrote an older PHP system; every domain model carries a `legacy_id` so records can be matched back to the previous database during migration via `php artisan import:legacy`.
 
 ## Common commands
 
@@ -19,35 +17,36 @@ php artisan import:legacy        # migrates data from the "old" DB connection (s
 php artisan serve
 php artisan tinker
 
-# Tests (PHPUnit 6, suites defined in phpunit.xml)
-vendor/bin/phpunit                                   # all tests
-vendor/bin/phpunit --testsuite Feature               # Feature suite only
-vendor/bin/phpunit --testsuite Unit                  # Unit suite only
-vendor/bin/phpunit tests/Feature/ExampleTest.php     # single file
-vendor/bin/phpunit --filter testMethodName           # single test
+# Tests (PHPUnit 12)
+php artisan test                                     # all tests
+php artisan test --testsuite=Feature                 # Feature suite only
+php artisan test tests/Feature/ExampleTest.php       # single file
+php artisan test --filter=testMethodName             # single test
 
-# Frontend (Laravel Mix / webpack)
+# Frontend (Vite + Bulma 1 + Alpine)
 npm install
-npm run dev        # one-off dev build
-npm run watch      # rebuild on change
-npm run prod       # production build
-```
+npm run dev        # vite dev server with HMR
+npm run build      # production build → public/build
 
-There is no lint config in the repo.
+# Lint (Laravel Pint — Boost guidelines say run before finalizing PHP edits)
+vendor/bin/pint --dirty --format agent
+```
 
 ## Architecture
 
+This is a **fresh Laravel 13 install** with the legacy app's custom code ported on top. No `app/Http/Kernel.php`, `app/Console/Kernel.php`, or `app/Exceptions/Handler.php` — middleware, exception handling and console routing all live in `bootstrap/app.php`. Service providers are auto-discovered via `bootstrap/providers.php`. `routes/api.php` and `routes/channels.php` are not present (opt-in via `php artisan install:api` / `install:broadcasting` if ever needed).
+
 ### Routing and request flow
 
-`routes/web.php` is intentionally tiny. The interesting route is:
+`routes/web.php` has four meaningful routes. The interesting one is:
 
 ```
-Route::get('notes/{path}', 'NotesController@show')->where('path', '.*')
+Route::get('notes/{path}', [NotesController::class, 'show'])->where('path', '.*')
 ```
 
-`{path}` is regex-unrestricted so the same URL space addresses both directories and files. `NotesController@show` first tries `Directory::where('path', $path)` and renders `notes.index` if found; if not, it falls through to `File::where('path', $path)`, fetches the blob from `Storage::cloud()` keyed by `md5`, and returns it as a raw response. `notes/{id}` (numeric) is a separate route that hits `SemestersController@show`. Order matters in `web.php`: the numeric semester route is declared before the catch-all `notes/{path}` so it wins for digits.
+`{path}` is regex-unrestricted so the same URL space addresses both directories and files. `NotesController@show` first tries `Directory::where('path', $path)` and renders `notes.index` if found; if not, it falls through to `File::where('path', $path)`, fetches the blob from the cloud disk keyed by `md5`, and returns it as a raw response. `notes/{id}` (numeric) is a separate route that hits `SemestersController@show`. Order matters in `web.php`: the numeric semester route is declared before the catch-all `notes/{path}` so it wins for digits.
 
-`Auth::routes()` is commented out — login/register views exist but auth is not wired up. Don't assume an authenticated user in controllers.
+Auth is intentionally **disabled**. The User model + users migration are retained for future use, but no `Auth::routes()`, no Breeze/Fortify, no `auth/*` views. Don't assume an authenticated user in controllers.
 
 ### Path strings are the primary key for browsing
 
@@ -55,31 +54,39 @@ Route::get('notes/{path}', 'NotesController@show')->where('path', '.*')
 
 ### Domain models
 
-All models live directly in `app/` (Laravel 5.x convention, no `app/Models/`). The shape:
+Ten models in `app/Models/` (L8+ convention). All use FQCN strings (`\App\Models\X::class`) in relations rather than the legacy `'App\X'` shorthand.
 
 - `Directory` is self-referential (`directory_id` → parent) and `hasMany` files.
 - `Semester` `hasMany` `Lesson`, and a `Lesson` points to a `Directory` — that's how the semester/lesson browse landing pages connect into the directory tree.
-- `Like`, `Report`, `Edit` are **polymorphic** (`morphTo` on `likeable` / `reportable` / `editable`) — they can attach to either a `File` or a `Directory`. When adding a new attachable type, register it on both sides.
+- `Like`, `Report`, `Edit` are **polymorphic** (`morphTo` on `likeable` / `reportable` / `editable`) — they can attach to either a `File` or a `Directory`. When adding a new attachable type, register it on both sides. Morph types persist as FQCNs (`App\Models\File`, `App\Models\Directory`); if you want short keys, register a morph map in `AppServiceProvider@boot`.
 - `File` ↔ `Label` is a `belongsToMany` with timestamps on the pivot.
-- Every domain model uses `SoftDeletes` and stores a `deleted_by_user_id`. Most models define a custom `scopeWithoutTimestamps()` that flips `$this->timestamps = false` and returns `$this` — used to bulk-update rows (e.g. the download counter increment in `NotesController@show`) without bumping `updated_at`. Chain it before `save()`/`update()`.
+- Most domain models use `SoftDeletes` (Like and Edit don't) and store a `deleted_by_user_id`. Most models define a custom `scopeWithoutTimestamps()` that flips `$this->timestamps = false` and returns `$this` — used to bulk-update rows (e.g. the download counter increment in `NotesController@show`) without bumping `updated_at`. Chain it before `save()`/`update()`.
 
 ### File storage and caching
 
-Uploaded file blobs are stored on `Storage::cloud()` (S3 by default; Azure also configured in `config/filesystems.php`) at a key equal to the file's `md5` column. On every download, `NotesController@show` does `Cache::store('file')->rememberForever("file_{$md5}", ...)` to cache the full response body on the **local file cache** (`storage/framework/cache/data`), so the second hit avoids S3. Implications:
+File blobs are stored on the cloud disk (`Storage::disk(config('filesystems.cloud', 's3'))`) at a key equal to the file's `md5` column. `Storage::cloud()` was removed in Laravel 9; we read `filesystems.cloud` explicitly. Switch backends with `FILESYSTEM_CLOUD=azure` (the `azure` disk is registered via `azure-oss/storage-blob-flysystem` in `AppServiceProvider@boot`; the legacy `matthewbdaly/laravel-azure-storage` and `league/flysystem-azure-blob-storage` packages are both abandoned).
+
+On every download, `NotesController@show` does `Cache::store('file')->rememberForever("file_{$md5}", ...)` to cache the full response body on the **local file cache** (`storage/framework/cache/data`), so the second hit avoids the cloud disk. Implications:
 
 - Cached responses include the `Content-Type` header captured at first fetch.
 - There is no eviction — when a file's blob is replaced, the `md5` should change (which naturally invalidates the cache key); never reuse an `md5` for different content.
 - The `total_downloads` / `total_overall` counters increment on every request including cache hits, written via `withoutTimestamps()->save()`.
+- Flysystem v3 dropped `CachedAdapter` (the legacy `'cache' => true` flag on the s3/azure disks); the Cache::store wrap above is the replacement.
 
 ### Two database connections
 
-`config/database.php` defines `mysql` (default) and a second `old` connection driven by `OLD_DB_DATABASE`. The only consumer is `app/Console/Commands/ImportLegacyData.php` (`php artisan import:legacy`), which reads from `old` and upserts into the new schema keyed by `legacy_id`. The import order matters — users → phones → labels → directories → files → semesters → lessons → likes → reports → edits — because later steps look up earlier `legacy_id`s. If you add a new model that needs legacy import, follow the same `updateOrCreate(['legacy_id' => ...], [...])` pattern and add it in dependency order.
+`config/database.php` defines `mysql` (default) and a second `old` connection driven by `OLD_DB_DATABASE`. The only consumer is `app/Console/Commands/ImportLegacyData.php` (`php artisan import:legacy`), which reads from `old` and upserts into the new schema keyed by `legacy_id`. The import order matters — users → phones → labels → directories → files → semesters → lessons → likes → reports → edits — because later steps look up earlier `legacy_id`s. If you add a new model that needs legacy import, follow the same `updateOrCreate(['legacy_id' => ...], [...])` pattern and add it in dependency order. `OLD_DB_DATABASE` is only required when running the import; normal site operation doesn't touch it.
 
 ### Views and frontend
 
-Blade templates in `resources/views/` extend `layouts.app`. The UI is **Bulma** (see `notes/index.blade.php` classes like `is-bordered`, `is-narrow`). `package.json` also pulls in `bootstrap-sass`, `jquery`, and `vue` from the default Laravel scaffolding but Bulma is what's actually rendered. `webpack.mix.js` compiles `resources/assets/js/app.js` → `public/js` and `resources/assets/sass/app.scss` → `public/css`; compiled bundles are gitignored.
+Blade templates in `resources/views/` extend `layouts.app`, which loads assets via `@vite(['resources/css/app.scss', 'resources/js/app.js'])`. The UI is **Bulma 1.x** loaded as a Sass `@use` import (`resources/css/app.scss`). Alpine.js powers the navbar burger toggle via `x-data="{ open: false }"` + `:class` bindings — there is no jQuery, Vue, lodash or axios. Vite (vite.config.js) replaces the Laravel Mix setup the legacy app used.
 
-===
+### AI tooling (Laravel Boost)
+
+`laravel/boost` is installed as a dev dep and registers an MCP server in `.mcp.json` so Claude Code (and the other supported agents) can introspect the app via the `boost:mcp` artisan command. Boost also synced its `laravel-best-practices` skill into `.claude/skills/` and appended canonical Laravel/PHPUnit/Pint guidelines below in this file (`<laravel-boost-guidelines>`). Run `php artisan boost:update` to refresh those guidelines after Laravel upgrades.
+
+---
+
 
 <laravel-boost-guidelines>
 === foundation rules ===
