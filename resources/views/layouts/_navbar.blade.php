@@ -1,4 +1,4 @@
-<nav class="navbar is-info">
+<nav class="navbar is-info" x-data="{ open: false }">
   <div class="container">
     <div class="navbar-brand">
         @if(! isset($hideLogo))
@@ -6,14 +6,17 @@
                 CEIDNOTES.NET
             </a>
         @endif
-      <div class="navbar-burger burger" data-target="navbarExampleTransparentExample">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
+      <a role="button" class="navbar-burger burger"
+         :class="{ 'is-active': open }"
+         @click="open = !open"
+         aria-label="menu" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
     </div>
 
-    <div id="navbarExampleTransparentExample" class="navbar-menu">
+    <div class="navbar-menu" :class="{ 'is-active': open }">
       <div class="navbar-start">
       </div>
 
@@ -21,52 +24,6 @@
         <a class="navbar-item" href="{{ route('semesters.index') }}">
           Notes
         </a>
-        @auth
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link" href="#">
-            {{ Auth::user()->name }}
-          </a>
-          <div class="navbar-dropdown is-boxed">
-            <a class="navbar-item" href="#">
-              Settings
-            </a>
-
-            <hr class="navbar-divider">
-
-            <a class="navbar-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-              Logout
-            </a>
-
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-              {{ csrf_field() }}
-            </form>
-          </div>
-        </div>
-        @else
-        {{--  <div class="navbar-item">
-          <div class="field is-grouped">
-            <p class="control">
-              <a class="button is-white is-outlined" href="{{ route('login') }}">
-                <span class="icon">
-                  <i class="fa fa-sign-in"></i>
-                </span>
-                <span>
-                  Login
-                </span>
-              </a>
-            </p>
-            <p class="control">
-              <a class="button is-primary" href="{{ route('register') }}">
-                <span class="icon">
-                  <i class="fa fa-user"></i>
-                </span>
-                <span>Register</span>
-              </a>
-            </p>
-          </div>
-        </div>  --}}
-        @endauth
       </div>
     </div>
   </div>

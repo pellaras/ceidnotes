@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedInteger('legacy_id')->unique()->nullable()->default(null);
+            $table->string('username')->unique();
+            $table->string('email')->unique();
+            $table->string('name');
+            $table->string('AM')->unique();
+            $table->unsignedInteger('registration_year');
+            $table->boolean('send_results_by_email')->default(true);
+            $table->unsignedBigInteger('phone_id')->nullable()->default(null);
+            $table->unsignedInteger('phone_notifications_start')->default(10);
+            $table->unsignedInteger('phone_notifications_end')->default(21);
+            $table->string('password')->nullable()->default(null);
+            $table->string('password_old')->nullable()->default(null);
+            $table->boolean('is_admin')->default(false);
+            $table->rememberToken();
+            $table->softDeletes();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+};

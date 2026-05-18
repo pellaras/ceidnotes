@@ -17,12 +17,6 @@
         <div class="tile is-child box content recent-files">
             <h3>Πρόσφατα αρχεία</h3>
             <table class="table is-bordered is-striped is-narrow is-fullwidth is-hoverable">
-                {{--  <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th></th>
-                    </tr>
-                </thead>  --}}
                 <tbody>
 
                     @foreach($files ?? [] as $file)

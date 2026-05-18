@@ -2,19 +2,19 @@
 
 namespace App\Console\Commands;
 
-use App\File;
-use App\Directory;
+use App\Models\Directory;
+use App\Models\Edit;
+use App\Models\File;
+use App\Models\Label;
+use App\Models\Lesson;
+use App\Models\Like;
+use App\Models\Phone;
+use App\Models\Report;
+use App\Models\Semester;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use App\Semester;
-use App\Lesson;
-use App\User;
-use App\Label;
-use App\Phone;
-use App\Like;
-use App\Report;
-use App\Edit;
 
 class ImportLegacyData extends Command
 {

@@ -18,7 +18,7 @@
                     <td>{{ $semester->name }}</td>
 
                     <td>
-                        <a class="button is-small is-primary" href="{{ route('notes.show', $semester->id) }}">
+                        <a class="button is-small is-primary" href="{{ route('semesters.show', $semester->id) }}">
                             Visit
                         </a>
                     </td>
