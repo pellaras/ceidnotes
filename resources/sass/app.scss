@@ -1,4 +1,41 @@
-@use "bulma/versions/bulma-no-dark-mode";
+@use "bulma/versions/bulma-no-dark-mode" with (
+    $scheme-h: 0,
+    $scheme-s: 0%,
+    $black: hsl(0, 0%, 4%),
+    $black-bis: hsl(0, 0%, 7%),
+    $black-ter: hsl(0, 0%, 14%),
+    $grey-darker: hsl(0, 0%, 21%),
+    $grey-dark: hsl(0, 0%, 29%),
+    $grey: hsl(0, 0%, 48%),
+    $grey-light: hsl(0, 0%, 71%),
+    $grey-lighter: hsl(0, 0%, 86%),
+    $grey-lightest: hsl(0, 0%, 93%),
+    $white-ter: hsl(0, 0%, 96%),
+    $white-bis: hsl(0, 0%, 98%),
+    $white: hsl(0, 0%, 100%),
+    $family-sans-serif: (BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif),
+    $primary: hsl(171, 100%, 41%),
+    $info: hsl(204, 86%, 53%),
+    $link: hsl(217, 71%, 53%),
+    $custom-colors: (
+        "primary": (hsl(171, 100%, 41%), hsl(0, 0%, 100%)),
+        "info": (hsl(204, 86%, 53%), hsl(0, 0%, 100%)),
+    ),
+    $navbar-burger-color: var(--bulma-navbar-item-color),
+    $footer-background-color: hsl(0, 0%, 96%),
+    $title-weight: 600,
+    $content-heading-weight: 400
+);
+
+.hero.is-info.is-bold {
+    background-image: linear-gradient(141deg, #04a6d7 0%, #209cee 71%, #3287f5 100%);
+}
+
+@media screen and (max-width: 768px) {
+    .hero.is-info.is-bold .navbar-menu {
+        background-image: linear-gradient(141deg, #04a6d7 0%, #209cee 71%, #3287f5 100%);
+    }
+}
 
 .recent-files span {
     font-size: 0.7em;
