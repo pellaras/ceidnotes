@@ -130,13 +130,36 @@ describe('directory listing', function () {
         $response->assertOk()->assertSee('Λύσεις.pdf');
     });
 
-    it('lists a live directory whose parent is soft-deleted (KI-9)', function () {
+    it('returns 404 for a live directory whose parent is soft-deleted', function () {
         $parent = Directory::factory()->root()->create(['name' => 'Notes']);
         $child = Directory::factory()->for($parent)->create(['name' => 'Old Exams']);
         File::factory()->for($child)->create(['name' => 'Λύσεις.pdf']);
         $parent->delete();
 
         $response = $this->get('/notes/Notes/Old+Exams');
+
+        $response->assertNotFound();
+    });
+
+    it('returns 404 for a live directory whose grandparent is soft-deleted', function () {
+        $grandparent = Directory::factory()->root()->create(['name' => 'Notes']);
+        $parent = Directory::factory()->for($grandparent)->create(['name' => 'Exams']);
+        Directory::factory()->for($parent)->create(['name' => 'Solutions']);
+        $grandparent->delete();
+
+        $response = $this->get('/notes/Notes/Exams/Solutions');
+
+        $response->assertNotFound();
+    });
+
+    it('lists a directory nested five levels deep when every ancestor is live', function () {
+        $directory = Directory::factory()->root()->create(['name' => 'Notes']);
+        foreach (['Exams', 'Solutions', 'Spring', 'Final'] as $name) {
+            $directory = Directory::factory()->for($directory)->create(['name' => $name]);
+        }
+        File::factory()->for($directory)->create(['name' => 'Λύσεις.pdf']);
+
+        $response = $this->get('/notes/Notes/Exams/Solutions/Spring/Final');
 
         $response->assertOk()->assertSee('Λύσεις.pdf');
     });
@@ -333,15 +356,16 @@ describe('file download', function () {
         $response->assertNotFound();
     });
 
-    it('downloads a live file inside a soft-deleted directory (KI-9)', function () {
+    it('returns 404 without counting a download for a live file inside a soft-deleted directory', function () {
         $directory = Directory::factory()->root()->create(['name' => 'Notes']);
-        $file = File::factory()->for($directory)->create(['name' => 'Λύσεις.txt']);
+        $file = File::factory()->for($directory)->create(['name' => 'Λύσεις.txt', 'total_downloads' => 7, 'total_overall' => 9]);
         Storage::fake(config('filesystems.cloud'))->put($file->md5, 'Σημειώσεις για τις ασκήσεις');
         $directory->delete();
 
         $response = $this->get('/notes/Notes/Λύσεις.txt');
 
-        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertNotFound();
+        $this->assertDatabaseHas('files', ['id' => $file->id, 'total_downloads' => 7, 'total_overall' => 9]);
     });
 
     it('returns 404 when a space in a file name is sent as a plus sign', function () {

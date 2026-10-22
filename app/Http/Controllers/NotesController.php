@@ -23,6 +23,10 @@ class NotesController extends Controller
             ->first();
 
         if ($directory) {
+            if (! $this->hasLiveAncestors($directory)) {
+                abort(404);
+            }
+
             $directories = $directory->directories;
             $files = $directory->files;
 
@@ -31,6 +35,10 @@ class NotesController extends Controller
 
         $file = File::where('path', $path)
             ->firstOrFail();
+
+        if (! $this->hasLiveAncestors($file)) {
+            abort(404);
+        }
 
         $downloadsDisk = Storage::disk('downloads');
 
@@ -58,5 +66,28 @@ class NotesController extends Controller
             'Content-Type' => $downloadsDisk->get($file->md5.'.type'),
             'Content-Length' => $downloadsDisk->size($file->md5),
         ]);
+    }
+
+    private function hasLiveAncestors(Directory|File $node): bool
+    {
+        $visitedIds = [];
+        $parentId = $node->directory_id;
+
+        while ($parentId !== null) {
+            if (in_array($parentId, $visitedIds, true)) {
+                return false;
+            }
+
+            $visitedIds[] = $parentId;
+            $parent = Directory::find($parentId);
+
+            if (! $parent) {
+                return false;
+            }
+
+            $parentId = $parent->directory_id;
+        }
+
+        return true;
     }
 }
