@@ -100,7 +100,8 @@ is already taken on your machine.
     `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis`;
   - `FILESYSTEM_CLOUD=azure` with `AZURE_STORAGE_ACCOUNT_NAME`, `AZURE_STORAGE_ACCOUNT_KEY` and
     `AZURE_STORAGE_CONTAINER`;
-  - `MAIL_*` for a real transport, and `BACKUP_NOTIFICATION_EMAIL` for backup failure mail.
+  - `MAIL_MAILER=resend` with `RESEND_API_KEY`, `MAIL_FROM_ADDRESS`/`MAIL_FROM_NAME` on a domain verified in
+    Resend, and `BACKUP_NOTIFICATION_EMAIL` for backup failure mail.
 - **Deploy:**
 
   ```bash
