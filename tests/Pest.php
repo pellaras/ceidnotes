@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /*
@@ -21,14 +20,7 @@ pest()->extend(TestCase::class)
     ->beforeEach(function () {
         $this->withoutVite();
 
-        $fileCachePath = sys_get_temp_dir().'/file-cache-'.Str::random(16);
-
-        config([
-            'cache.stores.file.path' => $fileCachePath.'/data',
-            'cache.stores.file.lock_path' => $fileCachePath.'/locks',
-        ]);
-
-        $this->beforeApplicationDestroyed(fn () => (new Filesystem)->deleteDirectory($fileCachePath));
+        Storage::fake('downloads');
     })
     ->in('Feature');
 

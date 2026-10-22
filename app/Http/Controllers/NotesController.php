@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Directory;
 use App\Models\File;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Response as HttpResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NotesController extends Controller
 {
-    public function show(string $path): View|HttpResponse
+    public function show(string $path): View|StreamedResponse
     {
         $directory = Directory::where('path', $path)
             ->with('directories', 'files')
@@ -28,28 +28,31 @@ class NotesController extends Controller
         $file = File::where('path', $path)
             ->firstOrFail();
 
-        $cacheKey = 'file_'.$file->md5;
+        $downloadsDisk = Storage::disk('downloads');
 
-        $cachedFile = Cache::store('file')->rememberForever($cacheKey, function () use ($file) {
-            $storagePath = $file->md5;
-            if (! Storage::cloud()->exists($storagePath)) {
+        if (! $downloadsDisk->exists($file->md5)) {
+            if (! Storage::cloud()->exists($file->md5)) {
                 abort(404);
             }
 
-            return [
-                'content' => Storage::cloud()->get($storagePath),
-                'type' => Storage::cloud()->mimeType($storagePath),
-            ];
-        });
-
-        $response = Response::make($cachedFile['content'], 200);
-        $response->header('Content-Type', $cachedFile['type']);
+            $partialPath = $file->md5.'.'.Str::random(16).'.part';
+            $downloadsDisk->writeStream($partialPath, Storage::cloud()->readStream($file->md5));
+            $downloadsDisk->put($file->md5.'.type', Storage::cloud()->mimeType($file->md5) ?: 'application/octet-stream');
+            $downloadsDisk->move($partialPath, $file->md5);
+        }
 
         File::withoutTimestamps(fn () => $file->incrementEach([
             'total_downloads' => 1,
             'total_overall' => 1,
         ]));
 
-        return $response;
+        return Response::stream(function () use ($downloadsDisk, $file) {
+            $stream = $downloadsDisk->readStream($file->md5);
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $downloadsDisk->get($file->md5.'.type'),
+            'Content-Length' => $downloadsDisk->size($file->md5),
+        ]);
     }
 }

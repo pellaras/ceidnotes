@@ -72,6 +72,13 @@ return [
             'report' => false,
         ],
 
+        'downloads' => [
+            'driver' => 'local',
+            'root' => storage_path('framework/cache/downloads'),
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

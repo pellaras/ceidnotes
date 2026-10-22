@@ -172,22 +172,22 @@ describe('file download', function () {
         $response = $this->get(route('notes.show', $file->path));
 
         $response->assertOk()
-            ->assertContent($contents)
+            ->assertStreamedContent($contents)
             ->assertHeader('Content-Type', $contentType);
     })->with([
         'a pdf' => ["%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n", 'application/pdf'],
         'a png' => [base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='), 'image/png'],
     ]);
 
-    it('sends an empty content type when the disk reports no mime type', function () {
+    it('sends application/octet-stream when the disk reports no mime type', function () {
         $file = File::factory()->create();
         Storage::fake(config('filesystems.cloud'))->put($file->md5, 'Σημειώσεις για τις ασκήσεις');
 
         $response = $this->get(route('notes.show', $file->path));
 
         $response->assertOk()
-            ->assertContent('Σημειώσεις για τις ασκήσεις')
-            ->assertHeader('Content-Type', '');
+            ->assertStreamedContent('Σημειώσεις για τις ασκήσεις')
+            ->assertHeader('Content-Type', 'application/octet-stream');
     });
 
     it('sends the file inline and uncacheable', function () {
@@ -199,6 +199,28 @@ describe('file download', function () {
         $response->assertOk()
             ->assertHeaderMissing('Content-Disposition')
             ->assertHeader('Cache-Control', 'no-cache, private');
+    });
+
+    it('sends the content length of the file', function () {
+        $file = File::factory()->create();
+        Storage::fake(config('filesystems.cloud'))->put($file->md5, 'Σημειώσεις για τις ασκήσεις');
+
+        $response = $this->get(route('notes.show', $file->path));
+
+        $response->assertOk()->assertHeader('Content-Length', strlen('Σημειώσεις για τις ασκήσεις'));
+    });
+
+    it('keeps one local copy of the blob and its content type per md5', function () {
+        $first = File::factory()->create();
+        $second = File::factory()->create(['md5' => $first->md5]);
+        Storage::fake(config('filesystems.cloud'))->put($first->md5, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
+
+        $this->get(route('notes.show', $first->path))->assertOk();
+        $this->get(route('notes.show', $second->path))->assertOk();
+
+        expect(Storage::disk('downloads')->allFiles())->toEqualCanonicalizing([$first->md5, $first->md5.'.type'])
+            ->and(Storage::disk('downloads')->get($first->md5))->toBe("%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n")
+            ->and(Storage::disk('downloads')->get($first->md5.'.type'))->toBe('application/pdf');
     });
 
     it('adds one to both download counters per download, cache hits included, without touching updated_at', function () {
@@ -238,7 +260,7 @@ describe('file download', function () {
             ->not->toContain('updated_at');
     });
 
-    it('serves a downloaded file from the cache after its blob is deleted (KI-1)', function () {
+    it('serves a downloaded file from its local copy after its blob is deleted', function () {
         $file = File::factory()->create();
         $disk = Storage::fake(config('filesystems.cloud'));
         $disk->put($file->md5, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
@@ -248,11 +270,11 @@ describe('file download', function () {
         $response = $this->get(route('notes.show', $file->path));
 
         $response->assertOk()
-            ->assertContent("%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n")
+            ->assertStreamedContent("%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n")
             ->assertHeader('Content-Type', 'application/pdf');
     });
 
-    it('serves a file from the cache entry of another file with the same md5', function () {
+    it('serves a file from the local copy of another file with the same md5', function () {
         $first = File::factory()->create();
         $second = File::factory()->create(['md5' => $first->md5, 'total_downloads' => 7, 'total_overall' => 9]);
         $disk = Storage::fake(config('filesystems.cloud'));
@@ -262,7 +284,7 @@ describe('file download', function () {
 
         $response = $this->get(route('notes.show', $second->path));
 
-        $response->assertOk()->assertContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
         $this->assertDatabaseHas('files', ['id' => $second->id, 'total_downloads' => 8, 'total_overall' => 10]);
     });
 
@@ -276,7 +298,7 @@ describe('file download', function () {
         $this->assertDatabaseHas('files', ['id' => $file->id, 'total_downloads' => 7, 'total_overall' => 9]);
     });
 
-    it('serves a blob uploaded after a 404 because the 404 is not cached', function () {
+    it('serves a blob uploaded after a 404 because the 404 leaves no local copy', function () {
         $file = File::factory()->create();
         $disk = Storage::fake(config('filesystems.cloud'));
         $this->get(route('notes.show', $file->path))->assertNotFound();
@@ -284,7 +306,7 @@ describe('file download', function () {
 
         $response = $this->get(route('notes.show', $file->path));
 
-        $response->assertOk()->assertContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
     });
 
     it('serves the live file when a soft-deleted file shares its path', function () {
@@ -297,7 +319,7 @@ describe('file download', function () {
 
         $response = $this->get('/notes/Notes/Λύσεις.txt');
 
-        $response->assertOk()->assertContent('Ενεργές λύσεις');
+        $response->assertOk()->assertStreamedContent('Ενεργές λύσεις');
     });
 
     it('returns 404 for soft-deleted files', function () {
@@ -319,7 +341,7 @@ describe('file download', function () {
 
         $response = $this->get('/notes/Notes/Λύσεις.txt');
 
-        $response->assertOk()->assertContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
     });
 
     it('returns 404 when a space in a file name is sent as a plus sign', function () {
@@ -339,7 +361,7 @@ describe('file download', function () {
 
         $response = $this->get($uri);
 
-        $response->assertOk()->assertContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
     })->with([
         'percent as %25' => ['Progress 100%.txt', '/notes/Notes/Progress%20100%25.txt'],
         'hash as %23' => ['Exercise #3.txt', '/notes/Notes/Exercise%20%233.txt'],
@@ -353,6 +375,6 @@ describe('file download', function () {
 
         $response = $this->get('/notes/1821/Χρονολόγιο.txt');
 
-        $response->assertOk()->assertContent('Σημειώσεις για τις ασκήσεις');
+        $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
     });
 });
