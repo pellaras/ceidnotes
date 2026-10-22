@@ -3,8 +3,6 @@
 use App\Models\Directory;
 use App\Models\Lesson;
 use App\Models\Semester;
-use Illuminate\Support\Facades\Exceptions;
-use Illuminate\View\ViewException;
 
 describe('index', function () {
     it('lists the semesters by id with a visit link to each', function () {
@@ -137,27 +135,29 @@ describe('show', function () {
         $response->assertNotFound();
     });
 
-    it('returns 500 when a lesson has no directory (KI-4)', function () {
-        Exceptions::fake();
+    it('leaves out a lesson that has no directory', function () {
         $semester = Semester::factory()->create();
-        Lesson::factory()->for($semester)->create(['directory_id' => null]);
+        Lesson::factory()->for($semester)->create(['name' => 'Ασκήσεις']);
+        Lesson::factory()->for($semester)->create(['name' => 'Εργαστήριο', 'directory_id' => null]);
 
         $response = $this->get("/notes/{$semester->id}");
 
-        $response->assertInternalServerError();
-        Exceptions::assertReported(fn (ViewException $exception) => str_contains($exception->getMessage(), 'property "path" on null'));
+        $response->assertOk()
+            ->assertSee('Ασκήσεις')
+            ->assertDontSee('Εργαστήριο');
     });
 
-    it('returns 500 when the directory of a lesson is soft-deleted (KI-4)', function () {
-        Exceptions::fake();
+    it('leaves out a lesson whose directory is soft-deleted', function () {
         $semester = Semester::factory()->create();
-        $lesson = Lesson::factory()->for($semester)->create();
-        $lesson->directory->delete();
+        Lesson::factory()->for($semester)->create(['name' => 'Ασκήσεις']);
+        $hidden = Lesson::factory()->for($semester)->create(['name' => 'Εργαστήριο']);
+        $hidden->directory->delete();
 
         $response = $this->get("/notes/{$semester->id}");
 
-        $response->assertInternalServerError();
-        Exceptions::assertReported(fn (ViewException $exception) => str_contains($exception->getMessage(), 'property "path" on null'));
+        $response->assertOk()
+            ->assertSee('Ασκήσεις')
+            ->assertDontSee('Εργαστήριο');
     });
 
     it('captures an all-digit directory path as a semester id and returns 404 (KI-8)', function () {
