@@ -160,7 +160,7 @@ describe('show', function () {
             ->assertDontSee('Εργαστήριο');
     });
 
-    it('captures an all-digit directory path as a semester id and returns 404 (KI-8)', function () {
+    it('treats an all-digit path as a semester id, never as a directory', function () {
         Directory::factory()->root()->create(['name' => '1821']);
 
         $response = $this->get('/notes/1821');

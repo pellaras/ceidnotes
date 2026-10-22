@@ -14,6 +14,10 @@ class NotesController extends Controller
 {
     public function show(string $path): View|StreamedResponse
     {
+        if (ctype_digit(Str::before($path, '/'))) {
+            abort(404);
+        }
+
         $directory = Directory::where('path', $path)
             ->with('directories', 'files')
             ->first();

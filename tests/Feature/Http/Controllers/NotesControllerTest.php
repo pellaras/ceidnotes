@@ -368,12 +368,32 @@ describe('file download', function () {
         'question mark as %3F' => ['What is it?.txt', '/notes/Notes/What%20is%20it%3F.txt'],
     ]);
 
-    it('downloads a file below an all-digit directory path', function () {
+    it('returns 404 without counting a download for a file below an all-digit directory path', function () {
         $directory = Directory::factory()->root()->create(['name' => '1821']);
-        $file = File::factory()->for($directory)->create(['name' => 'Χρονολόγιο.txt']);
+        $file = File::factory()->for($directory)->create(['name' => 'Χρονολόγιο.txt', 'total_downloads' => 7, 'total_overall' => 9]);
         Storage::fake(config('filesystems.cloud'))->put($file->md5, 'Σημειώσεις για τις ασκήσεις');
 
         $response = $this->get('/notes/1821/Χρονολόγιο.txt');
+
+        $response->assertNotFound();
+        $this->assertDatabaseHas('files', ['id' => $file->id, 'total_downloads' => 7, 'total_overall' => 9]);
+    });
+
+    it('returns 404 for a directory below an all-digit directory path', function () {
+        $directory = Directory::factory()->root()->create(['name' => '1821']);
+        Directory::factory()->for($directory)->create(['name' => 'Πηγές']);
+
+        $response = $this->get('/notes/1821/Πηγές');
+
+        $response->assertNotFound();
+    });
+
+    it('serves a path whose first segment only starts with digits', function () {
+        $directory = Directory::factory()->root()->create(['name' => '1821 Επανάσταση']);
+        $file = File::factory()->for($directory)->create(['name' => 'Χρονολόγιο.txt']);
+        Storage::fake(config('filesystems.cloud'))->put($file->md5, 'Σημειώσεις για τις ασκήσεις');
+
+        $response = $this->get(route('notes.show', $file->path));
 
         $response->assertOk()->assertStreamedContent('Σημειώσεις για τις ασκήσεις');
     });
