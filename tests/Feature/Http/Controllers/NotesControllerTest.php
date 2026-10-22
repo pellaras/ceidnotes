@@ -3,6 +3,7 @@
 use App\Models\Directory;
 use App\Models\File;
 use App\Models\Lesson;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 describe('directory listing', function () {
@@ -217,6 +218,24 @@ describe('file download', function () {
             'total_overall' => 11,
             'updated_at' => '2017-11-29 10:00:00',
         ]);
+    });
+
+    it('counts a download with one atomic update of both counters', function () {
+        $file = File::factory()->create();
+        Storage::fake(config('filesystems.cloud'))->put($file->md5, fake()->paragraph());
+        DB::enableQueryLog();
+
+        $this->get(route('notes.show', $file->path))->assertOk();
+
+        $updates = collect(DB::getQueryLog())
+            ->pluck('query')
+            ->filter(fn (string $query) => str_starts_with($query, 'update "files"'))
+            ->values();
+        expect($updates)->toHaveCount(1)
+            ->and($updates->first())
+            ->toContain('"total_downloads" = "total_downloads" + 1')
+            ->toContain('"total_overall" = "total_overall" + 1')
+            ->not->toContain('updated_at');
     });
 
     it('serves a downloaded file from the cache after its blob is deleted (KI-1)', function () {

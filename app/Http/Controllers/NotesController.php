@@ -45,9 +45,10 @@ class NotesController extends Controller
         $response = Response::make($cachedFile['content'], 200);
         $response->header('Content-Type', $cachedFile['type']);
 
-        $file->total_downloads++;
-        $file->total_overall++;
-        File::withoutTimestamps(fn () => $file->save());
+        File::withoutTimestamps(fn () => $file->incrementEach([
+            'total_downloads' => 1,
+            'total_overall' => 1,
+        ]));
 
         return $response;
     }
