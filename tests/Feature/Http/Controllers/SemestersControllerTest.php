@@ -123,23 +123,18 @@ describe('show', function () {
         'percent-encoded digit' => '/notes/%31',
     ]);
 
-    it('returns 500 for an unknown semester id (KI-3)', function () {
-        Exceptions::fake();
-
+    it('returns 404 for an unknown semester id', function () {
         $response = $this->get('/notes/999');
 
-        $response->assertInternalServerError();
-        Exceptions::assertReported(fn (Error $error) => str_contains($error->getMessage(), 'load()'));
+        $response->assertNotFound();
     });
 
-    it('returns 500 for a soft-deleted semester (KI-3)', function () {
-        Exceptions::fake();
+    it('returns 404 for a soft-deleted semester', function () {
         $semester = Semester::factory()->trashed()->create();
 
         $response = $this->get("/notes/{$semester->id}");
 
-        $response->assertInternalServerError();
-        Exceptions::assertReported(fn (Error $error) => str_contains($error->getMessage(), 'load()'));
+        $response->assertNotFound();
     });
 
     it('returns 500 when a lesson has no directory (KI-4)', function () {
@@ -165,13 +160,11 @@ describe('show', function () {
         Exceptions::assertReported(fn (ViewException $exception) => str_contains($exception->getMessage(), 'property "path" on null'));
     });
 
-    it('captures an all-digit directory path as a semester id and returns 500 (KI-8)', function () {
-        Exceptions::fake();
+    it('captures an all-digit directory path as a semester id and returns 404 (KI-8)', function () {
         Directory::factory()->root()->create(['name' => '1821']);
 
         $response = $this->get('/notes/1821');
 
-        $response->assertInternalServerError();
-        Exceptions::assertReported(fn (Error $error) => str_contains($error->getMessage(), 'load()'));
+        $response->assertNotFound();
     });
 });

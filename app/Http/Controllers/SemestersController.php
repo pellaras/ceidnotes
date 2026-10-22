@@ -16,7 +16,7 @@ class SemestersController extends Controller
 
     public function show(string $id): View
     {
-        $lessons = Semester::find($id)->load('lessons.directory')->lessons;
+        $lessons = Semester::findOrFail($id)->load('lessons.directory')->lessons;
 
         return view('notes.index', compact('lessons'));
     }
