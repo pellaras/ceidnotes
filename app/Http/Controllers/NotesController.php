@@ -2,54 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\File;
-use App\Directory;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
+use App\Models\Directory;
+use App\Models\File;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Cache;
-use App\Semester;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 
 class NotesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $path
-     * @return \Illuminate\Http\Response
-     */
-    public function show($path)
+    public function show(string $path): View|HttpResponse
     {
         $directory = Directory::where('path', $path)
             ->with('directories', 'files')
@@ -64,62 +27,28 @@ class NotesController extends Controller
 
         $file = File::where('path', $path)
             ->firstOrFail();
-        
-        $cache_key_user = 'file_' . $file->md5;
-        
-        $response = Cache::store('file')->rememberForever($cache_key_user, function () use ($file) {
-            $storage_path = $file->md5;
-            if (! Storage::cloud()->exists($storage_path)) {
+
+        $cacheKey = 'file_'.$file->md5;
+
+        $cachedFile = Cache::store('file')->rememberForever($cacheKey, function () use ($file) {
+            $storagePath = $file->md5;
+            if (! Storage::cloud()->exists($storagePath)) {
                 abort(404);
             }
 
-            $file_in_storage = Storage::cloud()->get($storage_path);
-            $type = Storage::cloud()->mimeType($storage_path);
-
-            $response = Response::make($file_in_storage, 200);
-            $response->header("Content-Type", $type);
-
-            return $response;
+            return [
+                'content' => Storage::cloud()->get($storagePath),
+                'type' => Storage::cloud()->mimeType($storagePath),
+            ];
         });
+
+        $response = Response::make($cachedFile['content'], 200);
+        $response->header('Content-Type', $cachedFile['type']);
 
         $file->total_downloads++;
         $file->total_overall++;
-        $file->withoutTimestamps()->save();
+        File::withoutTimestamps(fn () => $file->save());
 
         return $response;
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 }

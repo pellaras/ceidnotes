@@ -1,24 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class CreateLikesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('likes', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('legacy_id')->unique()->nullable()->default(null);
-            $table->unsignedInteger('user_id')->index();
-            $table->unsignedInteger('likeable_id');
-            $table->string('likeable_type');
+            $table->id();
+            $table->string('legacy_id')->unique()->nullable();
+            $table->foreignId('user_id')->index();
+            $table->morphs('likeable');
             $table->tinyInteger('value')->index();
             $table->timestamps();
             $table->unique(['user_id', 'likeable_id', 'likeable_type']);
@@ -27,11 +24,9 @@ class CreateLikesTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('likes');
     }
-}
+};

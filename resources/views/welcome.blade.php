@@ -5,24 +5,19 @@
       @include('layouts._navbar', ['hideLogo' => 'true'])
   <div class="hero-body">
     <div class="container">
-      <div class="tile is-parent">
-        <div class="tile is-child">
+      <div class="columns">
+        <div class="column">
             <h1 class="title">
-                CEIDNOTES.NET
+                {{ str(config('app.name'))->upper() }}
             </h1>
             <h2 class="subtitle">
                 Σημειώσεις για τα μαθήματα της σχολής
             </h2>
         </div>
-        <div class="tile is-child box content recent-files">
+        <div class="column">
+          <div class="box content recent-files">
             <h3>Πρόσφατα αρχεία</h3>
             <table class="table is-bordered is-striped is-narrow is-fullwidth is-hoverable">
-                {{--  <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th></th>
-                    </tr>
-                </thead>  --}}
                 <tbody>
 
                     @foreach($files ?? [] as $file)
@@ -39,6 +34,7 @@
 
                 </tbody>
             </table>
+          </div>
         </div>
       </div>
     </div>

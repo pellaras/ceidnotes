@@ -1,25 +1,43 @@
 <?php
 
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-/*
-|--------------------------------------------------------------------------
-| Model Factories
-|--------------------------------------------------------------------------
-|
-| This directory should contain each of the model factory definitions for
-| your application. Factories provide a convenient way to generate new
-| model instances for testing / seeding your application's database.
-|
-*/
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
-$factory->define(App\User::class, function (Faker $faker) {
-    static $password;
+/**
+ * @extends Factory<User>
+ */
+class UserFactory extends Factory
+{
+    /**
+     * The current password being used by the factory.
+     */
+    protected static ?string $password;
 
-    return [
-        'name' => $faker->name,
-        'email' => $faker->unique()->safeEmail,
-        'password' => $password ?: $password = bcrypt('secret'),
-        'remember_token' => str_random(10),
-    ];
-});
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => null,
+            'remember_token' => Str::random(10),
+            'legacy_id' => fake()->unique()->numberBetween(1, 999999),
+            'username' => fake()->unique()->userName(),
+            'AM' => (string) fake()->unique()->numberBetween(1000000, 9999999),
+            'registration_year' => fake()->numberBetween(2000, 2017),
+            'send_results_by_email' => fake()->boolean(),
+            'phone_notifications_start' => 10,
+            'phone_notifications_end' => 21,
+            'password_old' => static::$password ??= Hash::make('password'),
+            'is_admin' => false,
+        ];
+    }
+}

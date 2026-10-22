@@ -1,23 +1,21 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class CreateReportsTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('reports', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('legacy_id')->nullable()->default(null)->unique();
-            $table->unsignedInteger('user_id')->nullable()->default(null)->index();
-            $table->string('email')->nullable()->default(null);
+            $table->id();
+            $table->unsignedInteger('legacy_id')->unique()->nullable();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('email')->nullable();
             $table->morphs('reportable');
             $table->text('reason');
             $table->softDeletes();
@@ -27,11 +25,9 @@ class CreateReportsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('reports');
     }
-}
+};

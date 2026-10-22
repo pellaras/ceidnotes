@@ -1,26 +1,24 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class CreateDirectoriesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('directories', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('legacy_id')->unique()->nullable()->default(null);
-            $table->unsignedInteger('directory_id')->nullable()->default(null);
+            $table->id();
+            $table->unsignedInteger('legacy_id')->unique()->nullable();
+            $table->foreignId('directory_id')->nullable();
             $table->string('name');
-            $table->string('path', 1020)->nullable()->default(null);
-            $table->unsignedInteger('user_id');
-            $table->unsignedInteger('deleted_by_user_id')->nullable()->default(null);
+            $table->string('path', 1020)->nullable();
+            $table->foreignId('user_id');
+            $table->foreignId('deleted_by_user_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -28,11 +26,9 @@ class CreateDirectoriesTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('directories');
     }
-}
+};
